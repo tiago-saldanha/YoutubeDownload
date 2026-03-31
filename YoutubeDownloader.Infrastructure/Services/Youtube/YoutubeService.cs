@@ -69,40 +69,44 @@ namespace YoutubeDownloader.Infrastructure.Services.Youtube
             return download;
         }
 
-        private VideoOnlyStreamInfo GetVideoStream(
-            StreamManifest manifest,
-            DownloadCommand command)
+        private VideoOnlyStreamInfo GetVideoStream(StreamManifest manifest, DownloadCommand command)
         {
             logger.LogInformation(
                 "Selecting video stream. Resolution: {Resolution}, Container: {Container}.",
                 command.Resolution,
                 command.ContainerName);
 
+            Func<VideoOnlyStreamInfo, bool> filter = command.ContainerName.Contains("mp4")
+                ? s => s.VideoCodec.StartsWith("avc1")
+                : s => s.Container.Name == command.ContainerName;
+
             var candidates = manifest
                 .GetVideoOnlyStreams()
-                .Where(s => s.Container.Name == command.ContainerName)
-                .Where(s => s.VideoQuality.Label.Contains(command.Resolution));
+                .Where(s => s.VideoQuality.Label.Contains(command.Resolution))
+                .ToList();
 
-            // Priority: H264
             var videoStream = candidates
-                .Where(s => s.VideoCodec.StartsWith("avc1"))
+                .Where(filter)
                 .OrderByDescending(s => s.Size)
                 .FirstOrDefault();
 
             if (videoStream == null)
             {
-                logger.LogInformation("H264 not found, using fallback codec.");
+                logger.LogWarning("H264/Preferred codec not found, using fallback from candidates.");
 
                 videoStream = candidates
                     .OrderByDescending(s => s.Size)
-                    .First();
+                    .FirstOrDefault();
             }
 
-            logger.LogInformation(
-                "Video stream selected. Container: {Container}, Quality: {Quality}, Codec: {Codec}.",
-                videoStream.Container.Name,
-                videoStream.VideoQuality.Label,
-                videoStream.VideoCodec);
+            if (videoStream != null)
+            {
+                logger.LogInformation(
+                    "Video stream selected. Container: {Container}, Quality: {Quality}, Codec: {Codec}.",
+                    videoStream.Container.Name,
+                    videoStream.VideoQuality.Label,
+                    videoStream.VideoCodec);
+            }
 
             return videoStream;
         }
