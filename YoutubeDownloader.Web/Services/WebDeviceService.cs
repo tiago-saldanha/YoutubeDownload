@@ -7,5 +7,10 @@ namespace YoutubeDownloader.Web.Services
         public bool Desktop => false;
 
         public Task OpenFileAsync(string filePath) => Task.CompletedTask;
+
+        public Task<string?> PickFolderAsync()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

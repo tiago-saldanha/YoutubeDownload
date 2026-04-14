@@ -10,12 +10,23 @@
 <MudSnackbarProvider />
 
 <MudLayout Style="background-color: white !important;">
-    <MudAppBar Elevation="1" Dense="true" Class="px-6">
-        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-            <MudIcon Icon="@Icons.Material.Filled.SmartDisplay" Color="Color.Inherit" />
+
+    <!-- 🔝 TOP BAR -->
+    <MudAppBar Elevation="1" Dense="true" Class="px-4">
+
+        <!-- Botão de abrir/fechar menu -->
+        <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                       Color="Color.Inherit"
+                       Edge="Edge.Start"
+                       OnClick="ToggleDrawer" />
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="ml-2">
+            <MudIcon Icon="@Icons.Material.Filled.SmartDisplay" />
             <MudText Typo="Typo.h6">Youtube Downloader</MudText>
         </MudStack>
+
         <MudSpacer />
+
         <MudButton Variant="Variant.Text"
                    Color="Color.Inherit"
                    Href="https://github.com/tiago-saldanha/YoutubeDownloader"
@@ -23,25 +34,77 @@
                    StartIcon="@Icons.Custom.Brands.GitHub">
             Github
         </MudButton>
+
     </MudAppBar>
 
+    <!-- 📚 SIDEBAR -->
+    <MudDrawer @bind-Open="_drawerOpen"
+               Variant="DrawerVariant.Responsive"
+               Elevation="1"
+               Class="pa-2">
+
+        <MudNavMenu>
+
+            <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">
+                Home
+            </MudNavLink>
+
+            <MudNavLink Href="/settings" Icon="@Icons.Material.Filled.Settings">
+                Configurações
+            </MudNavLink>
+
+            <MudNavLink Href="/history" Icon="@Icons.Material.Filled.History">
+                Histórico
+            </MudNavLink>
+
+        </MudNavMenu>
+
+    </MudDrawer>
+
+    <!-- 📄 CONTEÚDO -->
     <MudMainContent Class="d-flex flex-column" Style="min-height: 100vh; background-color: white !important;">
 
-        <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-2 flex-grow-1" Style="background-color: white !important; flex: 1 0 auto;">
+        <MudContainer MaxWidth="MaxWidth.Medium"
+                      Class="mt-2 flex-grow-1"
+                      Style="background-color: white !important; flex: 1 0 auto;">
+
             @Body
+
         </MudContainer>
 
-        <MudContainer MaxWidth="MaxWidth.Medium" Class="py-4 mt-1" Style="background-color: white !important; flex-shrink: 0;">
-            <MudText Typo="Typo.body2" Align="Align.Center" Style="color: #616161; opacity: 0.6;">
+        <!-- 🔻 FOOTER -->
+        <MudContainer MaxWidth="MaxWidth.Medium"
+                      Class="py-4 mt-1"
+                      Style="background-color: white !important; flex-shrink: 0;">
+
+            <MudText Typo="Typo.body2"
+                     Align="Align.Center"
+                     Style="color: #616161; opacity: 0.6;">
+
                 YoutubeDownloader v@(AppInfo.Version) — Desenvolvido por
+
                 <MudLink Href="https://github.com/tiago-saldanha"
                          Target="_blank"
                          Style="color: #616161; font-weight: 500;"
                          Underline="Underline.Hover">
+
                     Tiago Ávila Saldanha
+
                 </MudLink>
+
             </MudText>
+
         </MudContainer>
 
     </MudMainContent>
+
 </MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+
+    private void ToggleDrawer()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+}

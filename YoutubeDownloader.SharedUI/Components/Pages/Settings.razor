@@ -1,0 +1,105 @@
+﻿@page "/settings"
+@using Microsoft.Maui.Storage
+@using MudBlazor
+@using YoutubeDownloader.Infrastructure.Services.Settings
+@using YoutubeDownloader.SharedUI.Interfaces
+@inject IDeviceService DeviceService
+@inject SettingsService SettingsService
+@inject ISnackbar Snackbar
+
+<PageTitle>Configurações</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-6">
+
+    <MudPaper Class="pa-4">
+
+        <MudText Typo="Typo.h5">Configurações</MudText>
+
+        <MudDivider Class="my-3" />
+
+        <!-- 📁 Pasta de Download -->
+        <MudText Typo="Typo.subtitle2">Pasta de download</MudText>
+
+        <MudTextField T="string"
+                      Value="_downloadPath"
+                      ReadOnly="true"
+                      Variant="Variant.Outlined"
+                      Class="mt-2"
+                      Adornment="Adornment.End"
+                      AdornmentIcon="@Icons.Material.Filled.Folder" />
+
+        <MudStack Row="true" Spacing="2" Class="mt-3">
+
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       OnClick="SelectFolder">
+                Escolher pasta
+            </MudButton>
+
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Secondary"
+                       OnClick="Reset">
+                Usar padrão
+            </MudButton>
+
+        </MudStack>
+
+        <!-- 💾 Ações -->
+        <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-6">
+
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Success"
+                       OnClick="Save">
+                Salvar
+            </MudButton>
+
+        </MudStack>
+
+    </MudPaper>
+
+</MudContainer>
+
+@code {
+    private string _downloadPath = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        _downloadPath = SettingsService.GetDownloadPath();
+    }
+
+    private async Task SelectFolder()
+    {
+        var path = await DeviceService.PickFolderAsync();
+
+        if (!string.IsNullOrWhiteSpace(path))
+        {
+            _downloadPath = path;
+        }
+    }
+
+    private void Reset()
+    {
+        _downloadPath = FileSystem.AppDataDirectory;
+
+        Snackbar.Add("Caminho resetado para o padrão.", Severity.Info);
+    }
+
+    private void Save()
+    {
+        if (string.IsNullOrWhiteSpace(_downloadPath))
+        {
+            Snackbar.Add("Caminho inválido.", Severity.Error);
+            return;
+        }
+
+        if (!Directory.Exists(_downloadPath))
+        {
+            Snackbar.Add("A pasta selecionada não existe.", Severity.Error);
+            return;
+        }
+
+        SettingsService.SetDownloadPath(_downloadPath);
+
+        Snackbar.Add("Configurações salvas com sucesso!", Severity.Success);
+    }
+}

@@ -1,0 +1,175 @@
+@page "/history"
+@using YoutubeDownloader.SharedUI.Interfaces
+@using YoutubeDownloader.SharedUI.Models
+@inject IDownloadHistoryService HistoryService
+@inject IDeviceService DeviceService
+@inject ISnackbar Snackbar
+
+<PageTitle>Histórico</PageTitle>
+
+<MudStack Row="true"
+          Justify="Justify.SpaceBetween"
+          AlignItems="AlignItems.Center"
+          Class="mb-4">
+
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+        <MudIcon Icon="@Icons.Material.Filled.History" />
+        <MudText Typo="Typo.h6">Histórico de Downloads</MudText>
+    </MudStack>
+
+    @if (_entries.Count > 0)
+    {
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Error"
+                   Size="Size.Small"
+                   StartIcon="@Icons.Material.Filled.DeleteSweep"
+                   OnClick="ClearAllAsync">
+            Limpar tudo
+        </MudButton>
+    }
+
+</MudStack>
+
+@if (_entries.Count == 0)
+{
+    <MudPaper Class="pa-8 d-flex flex-column align-center" Elevation="0" Outlined="true">
+        <MudIcon Icon="@Icons.Material.Filled.VideoLibrary"
+                 Size="Size.Large"
+                 Color="Color.Default"
+                 Style="opacity: 0.3;" />
+        <MudText Typo="Typo.body1" Class="mt-3" Style="opacity: 0.5;">
+            Nenhum download registrado ainda.
+        </MudText>
+        <MudText Typo="Typo.body2" Class="mt-1" Style="opacity: 0.4;">
+            Faça um download na página inicial e ele aparecerá aqui.
+        </MudText>
+    </MudPaper>
+}
+else
+{
+    <MudStack Spacing="2">
+
+        @foreach (var entry in _entries)
+        {
+            <MudPaper Class="pa-3" Elevation="1">
+
+                <MudStack Row="true" Spacing="3" AlignItems="AlignItems.Center">
+
+                    @if (!string.IsNullOrEmpty(entry.ThumbnailUrl))
+                    {
+                        <img src="@entry.ThumbnailUrl"
+                             style="width: 112px; height: 63px; object-fit: cover; border-radius: 4px; flex-shrink: 0;" />
+                    }
+
+                    <MudStack Spacing="1" Style="flex: 1; min-width: 0; overflow: hidden;">
+
+                        <MudText Typo="Typo.subtitle2"
+                                 Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600;">
+                            @entry.Title
+                        </MudText>
+
+                        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+
+                            <MudChip T="string"
+                                     Size="Size.Small"
+                                     Color="Color.Primary"
+                                     Variant="Variant.Outlined"
+                                     Class="ma-0">
+                                @entry.Format.ToUpper()
+                            </MudChip>
+
+                            @if (!entry.IsAudioOnly && !string.IsNullOrEmpty(entry.Quality) && entry.Quality != "best")
+                            {
+                                <MudChip T="string"
+                                         Size="Size.Small"
+                                         Variant="Variant.Outlined"
+                                         Class="ma-0">
+                                    @entry.Quality
+                                </MudChip>
+                            }
+
+                            @if (entry.FileSizeMB > 0)
+                            {
+                                <MudChip T="string"
+                                         Size="Size.Small"
+                                         Variant="Variant.Outlined"
+                                         Class="ma-0">
+                                    @entry.DisplaySize
+                                </MudChip>
+                            }
+
+                        </MudStack>
+
+                        <MudText Typo="Typo.caption" Style="opacity: 0.6;">
+                            @entry.DisplayDate
+                        </MudText>
+
+                    </MudStack>
+
+                    <MudStack Spacing="0" AlignItems="AlignItems.Center" Style="flex-shrink: 0;">
+
+                        @if (DeviceService.Desktop && entry.FileExists)
+                        {
+                            <MudIconButton Icon="@Icons.Material.Filled.OpenInNew"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           Title="Abrir arquivo"
+                                           OnClick="@(() => OpenFileAsync(entry.FilePath))" />
+                        }
+
+                        <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline"
+                                       Color="Color.Error"
+                                       Size="Size.Small"
+                                       Title="Remover do histórico"
+                                       OnClick="@(() => RemoveAsync(entry.Id))" />
+
+                    </MudStack>
+
+                </MudStack>
+
+            </MudPaper>
+        }
+
+    </MudStack>
+}
+
+@code {
+    private List<DownloadHistoryEntry> _entries = [];
+
+    protected override void OnInitialized()
+    {
+        LoadEntries();
+    }
+
+    private void LoadEntries()
+    {
+        _entries = [.. HistoryService.GetAll()];
+    }
+
+    private async Task OpenFileAsync(string filePath)
+    {
+        try
+        {
+            await DeviceService.OpenFileAsync(filePath);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao abrir arquivo: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task RemoveAsync(string id)
+    {
+        await HistoryService.RemoveAsync(id);
+        LoadEntries();
+        StateHasChanged();
+    }
+
+    private async Task ClearAllAsync()
+    {
+        await HistoryService.ClearAsync();
+        LoadEntries();
+        Snackbar.Add("Histórico limpo com sucesso.", Severity.Info);
+        StateHasChanged();
+    }
+}

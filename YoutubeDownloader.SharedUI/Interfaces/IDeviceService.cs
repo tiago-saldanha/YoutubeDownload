@@ -4,5 +4,6 @@
     {
         bool Desktop { get; }
         Task OpenFileAsync(string filePath);
+        Task<string?> PickFolderAsync();
     }
 }

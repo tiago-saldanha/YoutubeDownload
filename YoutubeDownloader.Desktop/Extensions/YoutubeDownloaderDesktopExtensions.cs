@@ -14,6 +14,7 @@ using YoutubeDownloader.Infrastructure.Services.Cache;
 using YoutubeDownloader.Infrastructure.Services.Ffmpeg;
 using YoutubeDownloader.Infrastructure.Services.Youtube;
 using YoutubeDownloader.SharedUI.Interfaces;
+using YoutubeDownloader.Infrastructure.Services.Settings;
 
 namespace YoutubeDownloader.Desktop.Extensions
 {
@@ -34,6 +35,8 @@ namespace YoutubeDownloader.Desktop.Extensions
         {
             builder.Services.AddSingleton<IDeviceService, MauiDeviceService>();
             builder.Services.AddSingleton<IAppInfoService, MauiAppInfoService>();
+            builder.Services.AddSingleton<IDownloadHistoryService, DownloadHistoryService>();
+            builder.Services.AddSingleton<SettingsService>();
             builder.Services.AddMudServices(config =>
             {
                 config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomRight;

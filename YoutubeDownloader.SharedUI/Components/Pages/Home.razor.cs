@@ -12,6 +12,7 @@ namespace YoutubeDownloader.SharedUI.Components.Pages
         [Inject] public NavigationManager Navigation { get; set; } = default!;
         [Inject] public IDeviceService DeviceService { get; set; } = default!;
         [Inject] public ISnackbar Snackbar { get; set; } = default!;
+        [Inject] public IDownloadHistoryService HistoryService { get; set; } = default!;
 
         private CancellationTokenSource? _cancelationTokenSource;
         private readonly YoutubePageViewModel _viewModel = new();
@@ -91,10 +92,27 @@ namespace YoutubeDownloader.SharedUI.Components.Pages
 
             try
             {
+                var selectedStream = _viewModel.SelectBestStream(_selectedFormat, _selectedQuality);
                 var command = _viewModel.GetDownloadCommand(_selectedFormat, _selectedQuality);
 
                 var download = await YoutubeAppService.DownloadFileAsync(
                     command, GetProgress(), _cancelationTokenSource.Token);
+
+                var historyEntry = new DownloadHistoryEntry
+                {
+                    VideoId = command.VideoId,
+                    Title = _viewModel.Title,
+                    ThumbnailUrl = _viewModel.ThumbnailUrl,
+                    FilePath = download.FilePath,
+                    FileName = download.FileName,
+                    Format = _selectedFormat,
+                    Quality = _selectedQuality,
+                    IsAudioOnly = command.IsAudioOnly,
+                    FileSizeMB = selectedStream.Size,
+                    DownloadedAt = DateTime.Now
+                };
+
+                await HistoryService.AddAsync(historyEntry);
 
                 if (DeviceService.Desktop)
                 {
